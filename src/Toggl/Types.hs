@@ -91,3 +91,28 @@ instance ToJSON TimeEntry where
         , "cur" .= teCur
         , "tags" .= teTags
         ]
+
+data TogglDetails = TogglDetails
+    { tdData :: [TimeEntry]
+    , tdTotalCount :: Integer
+    , tdTotalGrand :: Integer
+    , tdTotalBillable :: Maybe Money
+    , tdPerPage :: Integer
+    } deriving (Eq, Show, Generic)
+
+instance FromJSON TogglDetails where
+    parseJSON = withObject "TimeEntry" $ \o -> TogglDetails
+        <$> o .: "data"
+        <*> o .: "total_count"
+        <*> o .: "total_grand"
+        <*> o .: "total_billable"
+        <*> o .: "per_page"
+
+instance ToJSON TogglDetails where
+    toJSON TogglDetails{..} = object
+        [ "data" .= tdData
+        , "total_count" .= tdTotalCount
+        , "total_grand" .= tdTotalGrand
+        , "total_billable" .= tdTotalBillable
+        , "per_page" .= tdPerPage
+        ]
