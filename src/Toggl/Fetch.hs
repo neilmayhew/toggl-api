@@ -3,6 +3,7 @@
 
 module Toggl.Fetch where
 
+import Control.Monad (when)
 import Data.ByteString.Char8 (pack)
 import Data.Default (def)
 import Data.List (intercalate)
@@ -10,6 +11,8 @@ import Data.Monoid ((<>))
 import Data.Time
 import Network.HTTP.Req hiding (header)
 import Options.Applicative
+import System.IO (stderr)
+import Text.Printf (hPrintf)
 
 import Toggl.Types
 
@@ -18,6 +21,7 @@ data FetchParams = FetchParams
   , optWorkspace :: String
   , optClients :: [String]
   , optAgent :: Maybe String
+  , optTrace :: Bool
   , optSince :: Maybe Day
   , optUntil :: Maybe Day
   } deriving (Show)
@@ -44,6 +48,9 @@ parseFetchParams = FetchParams
       <> short 'a'
       <> metavar "AGENT"
       <> help "The user agent name to use" )
+  <*> ( switch
+      $  long "trace"
+      <> help "Trace network operations" )
   <*> ( optional $ argument auto
       $  metavar "SINCE"
       <> help "The starting date" )
@@ -77,15 +84,19 @@ fetchEntries FetchParams{..} = do
       fetch page = runReq def $
         responseBody <$> req GET url NoReqBody jsonResponse (params <> "page" =: page)
 
-      loop p n = do
+      loop p n t = do
+        when optTrace $
+          hPrintf stderr "Fetching page %d (%d/%d entries) ...\n" p n t
+
         details <- fetch p
 
         let p' = p + 1
             n' = n + tdPerPage details
+            t' = tdTotalCount details
 
         (tdData details :) <$>
-          (if n' < tdTotalCount details
-            then loop p' n'
+          (if n' < t'
+            then loop p' n' t'
             else pure [])
 
-  concat <$> loop (1 :: Int) 0
+  concat <$> loop (1 :: Int) 0 1
