@@ -2,15 +2,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Toggl.Types where
 
 import Data.Aeson (FromJSON(..), ToJSON(..), (.:), (.=), object, withObject)
 import Data.Fixed (Centi)
+import Data.Function (on)
 import Data.Text (Text)
-import Data.Time (UTCTime, NominalDiffTime)
+import Data.Time (ZonedTime, NominalDiffTime, zonedTimeToUTC)
 import GHC.Generics (Generic)
 
 type Money = Centi
+
+instance Eq ZonedTime where
+    (==) = (==) `on` zonedTimeToUTC
 
 data TimeEntry = TimeEntry
     { teId :: Int
@@ -32,9 +38,9 @@ data TimeEntry = TimeEntry
 
     , teDescription :: Text
 
-    , teStart :: UTCTime
-    , teEnd :: UTCTime
-    , teUpdated :: UTCTime
+    , teStart :: ZonedTime
+    , teEnd :: ZonedTime
+    , teUpdated :: ZonedTime
     , teDur :: NominalDiffTime
     , teUseStop :: Bool
 
