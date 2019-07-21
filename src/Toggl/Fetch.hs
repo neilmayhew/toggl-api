@@ -58,6 +58,9 @@ parseFetchParams = FetchParams
       $  metavar "UNTIL"
       <> help "The finishing date" )
 
+-- TODO: The API is retricted to periods no longer than a year.
+-- When the period is greater than a year, break into multiple fetches.
+
 fetchEntries :: FetchParams -> IO [TimeEntry]
 fetchEntries FetchParams{..} = do
 
@@ -72,6 +75,9 @@ fetchEntries FetchParams{..} = do
       since = optSince <|> pure aYearAgo
 
       url = https "toggl.com" /: "reports" /: "api" /: "v2" /: "details"
+
+      -- https://github.com/toggl/toggl_api_docs/blob/master/reports/detailed.md
+      -- https://github.com/toggl/toggl_api_docs/blob/master/reports.md#request-parameters
 
       params =
         basicAuth token "api_token" <>

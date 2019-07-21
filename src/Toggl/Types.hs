@@ -13,42 +13,46 @@ import Data.Text (Text)
 import Data.Time (ZonedTime, NominalDiffTime, zonedTimeToUTC)
 import GHC.Generics (Generic)
 
-type Money = Centi
+type Money = Centi  -- Not enough precision for all currencies.
+                    -- Some middle-eastern currencies use 3 decimal places, and
+                    -- two use a single base-5 place. (Malagasy Ariary and Mauritanian Ouguiya)
+                    -- Technically, one base-5 digit is log₁₀ 5 = 0.69897 base-10 digits.
 
 instance Eq ZonedTime where
     (==) = (==) `on` zonedTimeToUTC
 
+-- Documentation taken from https://github.com/toggl/toggl_api_docs/blob/master/reports/detailed.md
+
 data TimeEntry = TimeEntry
-    { teId :: Int
+    { teId :: Int               -- ^ id: time entry id
 
-    , teUid :: Int
-    , teUser :: Text
+    , teUid :: Int              -- ^ uid: user id whose time entry it is
+    , teUser :: Text            -- ^ user: full name of the user whose time entry it is
 
-    , teTid :: Maybe Int
-    , teTask :: Maybe Text
+    , teTid :: Maybe Int        -- ^ tid: task id
+    , teTask :: Maybe Text      -- ^ task: task name for which the time entry was recorded
 
-    , tePid :: Int
-    , teProject :: Text
+    , tePid :: Int              -- ^ pid: project id
+    , teProject :: Text         -- ^ project: project name for which the time entry was recorded
 
-    -- Not documented
-    , teProjectColor :: Text
-    , teProjectHexColor :: Text
+    , teProjectColor :: Text    -- ^ project_color: not documented
+    , teProjectHexColor :: Text -- ^ project_hex_color: not documented
 
-    , teClient :: Text
+    , teClient :: Text          -- ^ client: client name for which the time entry was recorded
 
-    , teDescription :: Text
+    , teDescription :: Text     -- ^ description: time entry description
 
-    , teStart :: ZonedTime
-    , teEnd :: ZonedTime
-    , teUpdated :: ZonedTime
-    , teDur :: NominalDiffTime
-    , teUseStop :: Bool
+    , teStart :: ZonedTime      -- ^ start: start time of the time entry in ISO 8601 date and time format (YYYY-MM-DDTHH:MM:SS)
+    , teEnd :: ZonedTime        -- ^ end: end time of the time entry in ISO 8601 date and time format (YYYY-MM-DDTHH:MM:SS)
+    , teUpdated :: ZonedTime    -- ^ updated: last time the time entry was updated in ISO 8601 date and time format (YYYY-MM-DDTHH:MM:SS)
+    , teDur :: NominalDiffTime  -- ^ dur: time entry duration in milliseconds
+    , teUseStop :: Bool         -- ^ use_stop: if the stop time is saved on the time entry, depends on user's personal settings
 
-    , teIsBillable :: Bool
-    , teBillable :: Maybe Money
-    , teCur :: Maybe Text
+    , teIsBillable :: Bool      -- ^ is_billable: boolean, if the time entry was billable or not
+    , teBillable :: Maybe Money -- ^ billable: billed amount
+    , teCur :: Maybe Text       -- ^ cur: billable amount currency
 
-    , teTags :: [Text]
+    , teTags :: [Text]          -- ^ tags: array of tag names, which assigned for the time entry
     } deriving (Eq, Show, Generic)
 
 instance FromJSON TimeEntry where
