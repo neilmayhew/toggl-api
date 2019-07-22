@@ -105,7 +105,7 @@ instance ToJSON TimeEntry where
 data TogglDetails = TogglDetails
     { tdData :: [TimeEntry]
     , tdTotalCount :: Integer
-    , tdTotalGrand :: Integer
+    , tdTotalGrand :: Maybe Integer
     , tdTotalBillable :: Maybe Money
     , tdPerPage :: Integer
     } deriving (Eq, Show, Generic)
