@@ -8,10 +8,12 @@ import Control.Monad (when)
 import Data.ByteString.Char8 (pack)
 import Data.Default (def)
 import Data.List (intercalate)
+import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 import Data.Time
 import Network.HTTP.Req hiding (header)
 import Options.Applicative hiding (action)
+import Prelude hiding (until)
 import System.IO (stderr)
 import Text.Printf (hPrintf)
 
@@ -65,28 +67,30 @@ parseFetchParams = FetchParams
 fetchEntries :: FetchParams -> IO [TimeEntry]
 fetchEntries FetchParams{..} = do
 
-  aYearAgo <- addGregorianYearsRollOver (-1) . utctDay <$> getCurrentTime
+  today <- utctDay <$> getCurrentTime
 
   let
+      aYearAgo = addDays 1 . addGregorianYearsClip (-1) $ today
+
       token = pack optToken
       clientIds = case optClients of
         [] -> Nothing
         cs -> Just $ intercalate "," cs
-      agent = optAgent <|> pure "fetchEntries"
-      since = optSince <|> pure aYearAgo
+      agent = fromMaybe "haskell-toggl" optAgent
+      since = fromMaybe aYearAgo optSince
+      until = fromMaybe today optUntil
 
       url = https "toggl.com" /: "reports" /: "api" /: "v2" /: "details"
 
       -- https://github.com/toggl/toggl_api_docs/blob/master/reports/detailed.md
       -- https://github.com/toggl/toggl_api_docs/blob/master/reports.md#request-parameters
 
-      params =
-        basicAuth token "api_token" <>
-        "user_agent" =: agent <>
-        "workspace_id" =: optWorkspace <>
-        queryParam "client_ids" clientIds <>
-        queryParam "since" since <>
-        queryParam "until" optUntil
+      params = basicAuth token "api_token"
+        <> "user_agent" =: agent
+        <> "workspace_id" =: optWorkspace
+        <> queryParam "client_ids" clientIds
+        <> "since" =: since
+        <> "until" =: until
 
       fetch page = runReq def $
         responseBody <$> req GET url NoReqBody jsonResponse (params <> "page" =: page)
