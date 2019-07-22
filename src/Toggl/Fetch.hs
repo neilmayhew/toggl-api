@@ -3,6 +3,7 @@
 
 module Toggl.Fetch where
 
+import Control.Concurrent (threadDelay)
 import Control.Monad (when)
 import Data.ByteString.Char8 (pack)
 import Data.Default (def)
@@ -10,7 +11,7 @@ import Data.List (intercalate)
 import Data.Monoid ((<>))
 import Data.Time
 import Network.HTTP.Req hiding (header)
-import Options.Applicative
+import Options.Applicative hiding (action)
 import System.IO (stderr)
 import Text.Printf (hPrintf)
 
@@ -92,17 +93,29 @@ fetchEntries FetchParams{..} = do
 
       loop p n t = do
         when optTrace $
-          hPrintf stderr "Fetching page %d (%d/%d entries) ...\n" p n t
+          hPrintf stderr "Fetching page %d (%d/%d entries) ... " p n t
 
-        details <- fetch p
+        (details, duration) <- timed $ fetch p
+
+        when optTrace $
+          hPrintf stderr "%s\n" (show duration)
 
         let p' = p + 1
             n' = n + tdPerPage details
             t' = tdTotalCount details
 
         (tdData details :) <$>
-          (if n' < t'
-            then loop p' n' t'
-            else pure [])
+          (if n' >= t'
+            then pure []
+            else do
+              threadDelay . round $ (1 - duration) * 1e6 -- Comply with rate-limiting
+              loop p' n' t')
 
   concat <$> loop (1 :: Int) 0 1
+
+timed :: (IO a) -> IO (a, NominalDiffTime)
+timed action = do
+  before <- getCurrentTime
+  result <- action
+  after <- getCurrentTime
+  pure (result, after `diffUTCTime` before)
