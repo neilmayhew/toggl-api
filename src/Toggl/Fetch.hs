@@ -6,8 +6,9 @@ module Toggl.Fetch where
 import Control.Concurrent (threadDelay)
 import Control.Monad (when)
 import Data.Bifunctor (first, second)
-import Data.ByteString.Char8 (pack)
+import Data.ByteString.Char8 (pack, unpack)
 import Data.Default (def)
+import Data.Foldable (for_)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 import Data.String (fromString)
@@ -94,8 +95,11 @@ fetchEntries FetchParams{..} = do
         <> "since" =: since
         <> "until" =: until
 
-      fetch page = runReq def $
-        responseBody <$> req GET url NoReqBody jsonResponse (params <> "page" =: page)
+      fetch page = do
+        resp <- runReq def $ req GET url NoReqBody jsonResponse (params <> "page" =: page)
+        for_ (responseHeader resp "Warning") $ \msg ->
+          hPrintf stderr "Warning: %s\n" $ unpack msg :: IO ()
+        pure $ responseBody resp
 
       loop p n t = do
         when optTrace $
