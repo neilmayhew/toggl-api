@@ -5,14 +5,16 @@ module Toggl.Fetch where
 
 import Control.Concurrent (threadDelay)
 import Control.Monad (when)
+import Data.Bifunctor (first, second)
 import Data.ByteString.Char8 (pack)
 import Data.Default (def)
-import Data.List (intercalate)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
+import Data.String (fromString)
 import Data.Time
 import Network.HTTP.Req hiding (header)
 import Options.Applicative hiding (action)
+import Options.Applicative.Types (readerAsk)
 import Prelude hiding (until)
 import System.IO (stderr)
 import Text.Printf (hPrintf)
@@ -22,7 +24,7 @@ import Toggl.Types
 data FetchParams = FetchParams
   { optToken :: String
   , optWorkspace :: String
-  , optClients :: [String]
+  , optQueries :: [(String, String)]
   , optAgent :: Maybe String
   , optTrace :: Bool
   , optSince :: Maybe Day
@@ -41,11 +43,11 @@ parseFetchParams = FetchParams
       <> short 'w'
       <> metavar "WORKSPACE"
       <> help "The workspace ID" )
-  <*> ( many $ strOption
-      $  long "client"
-      <> short 'c'
-      <> metavar "CLIENT"
-      <> help "Restrict results to this client (may be specified multiple times)" )
+  <*> ( many $ option qp
+      $  long "query"
+      <> short 'q'
+      <> metavar "PARAM=VALUE"
+      <> help "Use this additional query parameter (may be specified multiple times)" )
   <*> ( optional $ strOption
       $  long "agent"
       <> short 'a'
@@ -60,6 +62,8 @@ parseFetchParams = FetchParams
   <*> ( optional $ argument auto
       $  metavar "UNTIL"
       <> help "The finishing date" )
+  where
+    qp = second (drop 1) . span (/= '=') <$> readerAsk
 
 -- TODO: The API is retricted to periods no longer than a year.
 -- When the period is greater than a year, break into multiple fetches.
@@ -73,9 +77,7 @@ fetchEntries FetchParams{..} = do
       aYearAgo = addDays 1 . addGregorianYearsClip (-1) $ today
 
       token = pack optToken
-      clientIds = case optClients of
-        [] -> Nothing
-        cs -> Just $ intercalate "," cs
+      queries = foldMap (uncurry (=:) . first fromString) optQueries
       agent = fromMaybe "haskell-toggl" optAgent
       since = fromMaybe aYearAgo optSince
       until = fromMaybe today optUntil
@@ -88,7 +90,7 @@ fetchEntries FetchParams{..} = do
       params = basicAuth token "api_token"
         <> "user_agent" =: agent
         <> "workspace_id" =: optWorkspace
-        <> queryParam "client_ids" clientIds
+        <> queries
         <> "since" =: since
         <> "until" =: until
 
