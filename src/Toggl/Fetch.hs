@@ -9,6 +9,7 @@ import Data.Bifunctor (first, second)
 import Data.ByteString.Char8 (pack, unpack)
 import Data.Default (def)
 import Data.Foldable (for_)
+import Data.List (unfoldr)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 import Data.String (fromString)
@@ -66,8 +67,18 @@ parseFetchParams = FetchParams
   where
     qp = second (drop 1) . span (/= '=') <$> readerAsk
 
--- TODO: The API is retricted to periods no longer than a year.
--- When the period is greater than a year, break into multiple fetches.
+-- The API is retricted to periods no longer than a year.
+-- When the period is greater than a year, we break it into multiple fetches.
+-- Intervals are closed in the API.
+
+splitPeriod :: (Day, Day) -> [(Day, Day)]
+splitPeriod (s, u) = zip (s : us) us
+  where
+    us = unfoldr go s
+    go d = let d' = addGregorianYearsClip 1 d in
+      if d <= u
+        then Just (min d' u, d')
+        else Nothing
 
 fetchEntries :: FetchParams -> IO [TimeEntry]
 fetchEntries FetchParams{..} = do
@@ -92,25 +103,27 @@ fetchEntries FetchParams{..} = do
         <> "user_agent" =: agent
         <> "workspace_id" =: optWorkspace
         <> queries
-        <> "since" =: since
-        <> "until" =: until
 
-      fetch page = do
-        resp <- runReq def $ req GET url NoReqBody jsonResponse (params <> "page" =: page)
+      fetchPage (s, u) p = do
+        resp <- runReq def $ req GET url NoReqBody jsonResponse $ params
+          <> "since" =: s
+          <> "until" =: u
+          <> "page" =: p
         for_ (responseHeader resp "Warning") $ \msg ->
           hPrintf stderr "Warning: %s\n" $ unpack msg :: IO ()
         pure $ responseBody resp
 
-      loop p n t = do
+      loop period@(s, u) p n t = do
         when optTrace $
-          hPrintf stderr "Fetching page %d (%d/%d entries) ... " p n t
+          hPrintf stderr "Fetching page %d for %s:%s (%d/%d entries) ... "
+            p (show s) (show u) n t
 
-        (details, duration) <- timed $ fetch p
+        (details, duration) <- timed $ fetchPage period p
 
         when optTrace $
           hPrintf stderr "%s\n" (show duration)
 
-        let p' = p + 1
+        let p' = p + 1 :: Int
             n' = n + tdPerPage details
             t' = tdTotalCount details
 
@@ -119,9 +132,11 @@ fetchEntries FetchParams{..} = do
             then pure []
             else do
               threadDelay . round $ (1 - duration) * 1e6 -- Comply with rate-limiting
-              loop p' n' t')
+              loop period p' n' t')
 
-  concat <$> loop (1 :: Int) 0 1
+      fetchPeriod period = concat <$> loop period 1 0 1
+
+  fmap concat . traverse fetchPeriod $ splitPeriod (since, until)
 
 timed :: (IO a) -> IO (a, NominalDiffTime)
 timed action = do
