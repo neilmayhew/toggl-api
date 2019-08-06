@@ -29,7 +29,10 @@ data FetchParams = FetchParams
   , optQueries :: [(String, String)]
   , optAgent :: Maybe String
   , optTrace :: Bool
-  , optSince :: Maybe Day
+  } deriving (Show)
+
+data FetchPeriod = FetchPeriod
+  { optSince :: Maybe Day
   , optUntil :: Maybe Day
   } deriving (Show)
 
@@ -58,14 +61,17 @@ parseFetchParams = FetchParams
   <*> ( switch
       $  long "trace"
       <> help "Trace network operations" )
-  <*> ( optional $ argument auto
+  where
+    qp = second (drop 1) . span (/= '=') <$> readerAsk
+
+parseFetchPeriod :: Parser FetchPeriod
+parseFetchPeriod = FetchPeriod
+  <$> ( optional $ argument auto
       $  metavar "SINCE"
       <> help "The starting date" )
   <*> ( optional $ argument auto
       $  metavar "UNTIL"
       <> help "The finishing date" )
-  where
-    qp = second (drop 1) . span (/= '=') <$> readerAsk
 
 -- The API is retricted to periods no longer than a year.
 -- When the period is greater than a year, we break it into multiple fetches.
@@ -80,8 +86,8 @@ splitPeriod (s, u) = zip (s : us) us
         then Just (min d' u, d')
         else Nothing
 
-fetchEntries :: FetchParams -> IO [TimeEntry]
-fetchEntries FetchParams{..} = do
+fetchEntries :: FetchParams -> FetchPeriod -> IO [TimeEntry]
+fetchEntries FetchParams{..} FetchPeriod{..} = do
 
   today <- utctDay <$> getCurrentTime
 
