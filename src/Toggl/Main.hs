@@ -15,6 +15,9 @@ handleFiles action files =
     bitraverse pure (action . concat) . partitionEithers =<<
     traverse eitherDecodeFileStrict files
 
+loadFiles :: [FilePath] -> IO ([String], [TimeEntry])
+loadFiles = handleFiles pure
+
 mainFilesWith :: ([TimeEntry] -> IO Bool) -> [FilePath] -> IO ()
 mainFilesWith action files = do
     (errs, success) <- handleFiles action files
