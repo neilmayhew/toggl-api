@@ -10,7 +10,7 @@ import Data.Aeson (FromJSON(..), ToJSON(..), (.:), (.=), object, withObject)
 import Data.Fixed (Centi)
 import Data.Function (on)
 import Data.Text (Text)
-import Data.Time (ZonedTime, NominalDiffTime, zonedTimeToUTC)
+import Data.Time
 import GHC.Generics (Generic)
 
 type Money = Centi  -- Not enough precision for all currencies.
@@ -54,6 +54,17 @@ data TimeEntry = TimeEntry
 
     , teTags :: [Text]          -- ^ tags: array of tag names, which assigned for the time entry
     } deriving (Eq, Show, Generic)
+
+instance Ord TimeEntry where
+    compare a b = compare (teLocal a) (teLocal b)
+               <> compare (teUser  a) (teUser  b)
+               <> compare (teId    a) (teId    b)
+
+teLocal :: TimeEntry -> LocalTime
+teLocal = zonedTimeToLocalTime . teStart
+
+teDay :: TimeEntry -> Day
+teDay = localDay . teLocal
 
 instance FromJSON TimeEntry where
     parseJSON = withObject "TimeEntry" $ \o -> TimeEntry
