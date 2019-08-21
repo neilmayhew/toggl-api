@@ -1,0 +1,58 @@
+cabal-version:       >=1.10
+
+name:               toggl-api
+version:            0.1.0.0
+synopsis:           A library and utilities for using the Toggl API
+homepage:           https://github.com/neilmayhew/toggl-api
+bug-reports:        https://github.com/neilmayhew/toggl-api/issues
+license:            BSD3
+license-file:       LICENSE
+author:             Neil Mayhew
+maintainer:         neil@neil.mayhew.name
+copyright:          2019
+category:           Network
+build-type:         Simple
+
+library
+  exposed-modules:    Toggl.Main,
+                      Toggl.Fetch,
+                      Toggl.Types
+  hs-source-dirs:     src
+  build-depends:      base >=4.12 && <4.13,
+                      aeson >=1.4 && <1.5,
+                      bytestring >=0.10 && <0.11,
+                      data-default >=0.7 && <0.8,
+                      directory >=1.3 && <1.4,
+                      optparse-applicative >= 0.14 && <0.15,
+                      req >=1.2 && <2.2,
+                      text >=1.2 && <1.3,
+                      time >=1.8 && <1.9
+  default-language:   Haskell2010
+  other-extensions:   CPP, OverloadedStrings, RecordWildCards, DeriveGeneric
+  ghc-options:        -Wall -Wcompat
+
+executable fetch-toggl-entries
+  main-is:            FetchDetails.hs
+  hs-source-dirs:     util
+  build-depends:      base >=4.12 && <4.13,
+                      aeson >=1.4 && <1.5,
+                      bytestring >=0.10 && <0.11,
+                      optparse-applicative >= 0.14 && <0.15,
+                      toggl-api
+  default-language:   Haskell2010
+  other-extensions:   OverloadedStrings
+  ghc-options:        -Wall -Wcompat
+
+executable update-toggl-entries
+  main-is:            UpdateDetails.hs
+  hs-source-dirs:     util
+  build-depends:      base >=4.12 && <4.13,
+                      aeson >=1.4 && <1.5,
+                      bytestring >=0.10 && <0.11,
+                      directory >=1.3 && <1.4,
+                      optparse-applicative >= 0.14 && <0.15,
+                      time >=1.8 && <1.9,
+                      toggl-api
+  default-language:   Haskell2010
+  other-extensions:   OverloadedStrings
+  ghc-options:        -Wall -Wcompat

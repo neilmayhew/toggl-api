@@ -1,0 +1,5 @@
+/.stack-root/
+/.stack-work/
+/stack.yaml.lock
+/dist/
+/result
