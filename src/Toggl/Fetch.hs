@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -7,7 +8,6 @@ import Control.Concurrent (threadDelay)
 import Control.Monad (when)
 import Data.Bifunctor (first, second)
 import Data.ByteString.Char8 (pack, unpack)
-import Data.Default (def)
 import Data.Foldable (for_)
 import Data.List (unfoldr)
 import Data.Maybe (fromMaybe)
@@ -22,6 +22,13 @@ import System.IO (stderr)
 import Text.Printf (hPrintf)
 
 import Toggl.Types
+
+#if !MIN_VERSION_req(2,0,0)
+import Data.Default (def)
+
+defaultHttpConfig :: HttpConfig
+defaultHttpConfig = def
+#endif
 
 data FetchParams = FetchParams
   { optToken :: String
@@ -111,7 +118,7 @@ fetchEntries FetchParams{..} FetchPeriod{..} = do
         <> queries
 
       fetchPage (s, u) p = do
-        resp <- runReq def $ req GET url NoReqBody jsonResponse $ params
+        resp <- runReq defaultHttpConfig $ req GET url NoReqBody jsonResponse $ params
           <> "since" =: s
           <> "until" =: u
           <> "page" =: p
