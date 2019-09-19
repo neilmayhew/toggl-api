@@ -56,8 +56,8 @@ data TimeEntry = TimeEntry
     } deriving (Eq, Show, Generic)
 
 instance Ord TimeEntry where
-    compare a b = compare (teLocal a) (teLocal b)
-               <> compare (teUser  a) (teUser  b)
+    compare a b = compare (teUser  a) (teUser  b)
+               <> compare (teLocal a) (teLocal b)
                <> compare (teId    a) (teId    b)
 
 teLocal :: TimeEntry -> LocalTime
