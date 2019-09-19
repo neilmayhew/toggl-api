@@ -37,13 +37,13 @@ main = do
 
   let cutoff = if null existing
           then updateEpoch
-          else addDays (-updateWindow) . maximum $ map teDay existing
+          else addDays (-updateWindow) . maximum $ map teStartDay existing
 
   today <- localDay . zonedTimeToLocalTime <$> getZonedTime
 
   updates <- fetchEntries fetchParams $ FetchPeriod (Just cutoff) (Just today)
 
-  let old = filter ((< cutoff) . teDay) existing
+  let old = filter ((< cutoff) . teStartDay) existing
       new = updates ++ old -- Toggl returns newest-first
 
   when (existing /= new) $

@@ -9,6 +9,7 @@ module Toggl.Types where
 import Data.Aeson (FromJSON(..), ToJSON(..), (.:), (.=), object, withObject)
 import Data.Fixed (Centi)
 import Data.Function (on)
+import Data.Ord (comparing)
 import Data.Text (Text)
 import Data.Time
 import GHC.Generics (Generic)
@@ -18,6 +19,7 @@ type Money = Centi  -- Not enough precision for all currencies.
                     -- two use a single base-5 place. (Malagasy Ariary and Mauritanian Ouguiya)
                     -- Technically, one base-5 digit is log₁₀ 5 = 0.69897 base-10 digits.
 
+-- Allow automatic Eq derivation for TimeEntry
 instance Eq ZonedTime where
     (==) = (==) `on` zonedTimeToUTC
 
@@ -56,15 +58,22 @@ data TimeEntry = TimeEntry
     } deriving (Eq, Show, Generic)
 
 instance Ord TimeEntry where
-    compare a b = compare (teUser  a) (teUser  b)
-               <> compare (teLocal a) (teLocal b)
-               <> compare (teId    a) (teId    b)
+    compare = comparing teUser
+           <> comparing teStartLocal
+           <> comparing teEndLocal
+           <> comparing teId
 
-teLocal :: TimeEntry -> LocalTime
-teLocal = zonedTimeToLocalTime . teStart
+teStartLocal :: TimeEntry -> LocalTime
+teStartLocal = zonedTimeToLocalTime . teStart
 
-teDay :: TimeEntry -> Day
-teDay = localDay . teLocal
+teEndLocal :: TimeEntry -> LocalTime
+teEndLocal = zonedTimeToLocalTime . teEnd
+
+teStartDay :: TimeEntry -> Day
+teStartDay = localDay . teStartLocal
+
+teEndDay :: TimeEntry -> Day
+teEndDay = localDay . teEndLocal
 
 instance FromJSON TimeEntry where
     parseJSON = withObject "TimeEntry" $ \o -> TimeEntry
