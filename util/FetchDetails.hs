@@ -3,7 +3,6 @@
 module Main (main) where
 
 import Data.Aeson (encode)
-import Data.Monoid ((<>))
 import Options.Applicative
 
 import qualified Data.ByteString.Lazy.Char8 as B

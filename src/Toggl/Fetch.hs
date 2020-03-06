@@ -11,7 +11,6 @@ import Data.ByteString.Char8 (pack, unpack)
 import Data.Foldable (for_)
 import Data.List (unfoldr)
 import Data.Maybe (fromMaybe)
-import Data.Monoid ((<>))
 import Data.String (fromString)
 import Data.Time
 import Network.HTTP.Req hiding (header)

@@ -5,7 +5,6 @@ module Main (main) where
 
 import Control.Monad (filterM, when)
 import Data.Aeson (encode)
-import Data.Monoid ((<>))
 import Data.Time
 import Options.Applicative
 import System.Directory (doesFileExist)
