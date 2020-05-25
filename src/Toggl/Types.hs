@@ -26,35 +26,35 @@ instance Eq ZonedTime where
 -- Documentation taken from https://github.com/toggl/toggl_api_docs/blob/master/reports/detailed.md
 
 data TimeEntry = TimeEntry
-    { teId :: Int               -- ^ id: time entry id
+    { teId :: Int                     -- ^ id: time entry id
 
-    , teUid :: Int              -- ^ uid: user id whose time entry it is
-    , teUser :: Text            -- ^ user: full name of the user whose time entry it is
+    , teUid :: Int                    -- ^ uid: user id whose time entry it is
+    , teUser :: Text                  -- ^ user: full name of the user whose time entry it is
 
-    , teTid :: Maybe Int        -- ^ tid: task id
-    , teTask :: Maybe Text      -- ^ task: task name for which the time entry was recorded
+    , teTid :: Maybe Int              -- ^ tid: task id
+    , teTask :: Maybe Text            -- ^ task: task name for which the time entry was recorded
 
-    , tePid :: Int              -- ^ pid: project id
-    , teProject :: Text         -- ^ project: project name for which the time entry was recorded
+    , tePid :: Maybe Int              -- ^ pid: project id
+    , teProject :: Maybe Text         -- ^ project: project name for which the time entry was recorded
 
-    , teProjectColor :: Text    -- ^ project_color: not documented
-    , teProjectHexColor :: Text -- ^ project_hex_color: not documented
+    , teProjectColor :: Maybe Text    -- ^ project_color: not documented
+    , teProjectHexColor :: Maybe Text -- ^ project_hex_color: not documented
 
-    , teClient :: Text          -- ^ client: client name for which the time entry was recorded
+    , teClient :: Maybe Text          -- ^ client: client name for which the time entry was recorded
 
-    , teDescription :: Text     -- ^ description: time entry description
+    , teDescription :: Text           -- ^ description: time entry description
 
-    , teStart :: ZonedTime      -- ^ start: start time of the time entry in ISO 8601 date and time format (YYYY-MM-DDTHH:MM:SS)
-    , teEnd :: ZonedTime        -- ^ end: end time of the time entry in ISO 8601 date and time format (YYYY-MM-DDTHH:MM:SS)
-    , teUpdated :: ZonedTime    -- ^ updated: last time the time entry was updated in ISO 8601 date and time format (YYYY-MM-DDTHH:MM:SS)
-    , teDur :: NominalDiffTime  -- ^ dur: time entry duration in milliseconds
-    , teUseStop :: Bool         -- ^ use_stop: if the stop time is saved on the time entry, depends on user's personal settings
+    , teStart :: ZonedTime            -- ^ start: start time of the time entry in ISO 8601 date and time format (YYYY-MM-DDTHH:MM:SS)
+    , teEnd :: ZonedTime              -- ^ end: end time of the time entry in ISO 8601 date and time format (YYYY-MM-DDTHH:MM:SS)
+    , teUpdated :: ZonedTime          -- ^ updated: last time the time entry was updated in ISO 8601 date and time format (YYYY-MM-DDTHH:MM:SS)
+    , teDur :: NominalDiffTime        -- ^ dur: time entry duration in milliseconds
+    , teUseStop :: Bool               -- ^ use_stop: if the stop time is saved on the time entry, depends on user's personal settings
 
-    , teIsBillable :: Bool      -- ^ is_billable: boolean, if the time entry was billable or not
-    , teBillable :: Maybe Money -- ^ billable: billed amount
-    , teCur :: Maybe Text       -- ^ cur: billable amount currency
+    , teIsBillable :: Bool            -- ^ is_billable: boolean, if the time entry was billable or not
+    , teBillable :: Maybe Money       -- ^ billable: billed amount
+    , teCur :: Maybe Text             -- ^ cur: billable amount currency
 
-    , teTags :: [Text]          -- ^ tags: array of tag names, which assigned for the time entry
+    , teTags :: [Text]                -- ^ tags: array of tag names, which assigned for the time entry
     } deriving (Eq, Show, Generic)
 
 instance Ord TimeEntry where
