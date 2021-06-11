@@ -1,4 +1,4 @@
-{ mkDerivation, lib, stdenv
+{ mkDerivation, lib
 , aeson, base, bytestring, data-default, directory, optparse-applicative
 , req, text, time
 }:
@@ -25,6 +25,6 @@ mkDerivation rec {
   ];
   homepage = "https://github.com/neilmayhew/toggl-api";
   description = "A library and utilities for using the Toggl API";
-  license = stdenv.lib.licenses.bsd3;
+  license = lib.licenses.bsd3;
   maintainers = [ { name = "Neil Mayhew"; email = "neil@neil.mayhew.name"; } ];
 }
